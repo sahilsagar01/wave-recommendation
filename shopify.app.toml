@@ -1,0 +1,32 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "0d745042578b7d9c39fdddebce25ce8d"
+name = "wave-recommendation"
+handle = "wave-recommendation"
+application_url = "https://provided-boston-formed-numerical.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
+
+[webhooks]
+api_version = "2025-04"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = ["https://provided-boston-formed-numerical.trycloudflare.com/auth/callback", "https://provided-boston-formed-numerical.trycloudflare.com/auth/shopify/callback", "https://provided-boston-formed-numerical.trycloudflare.com/api/auth/callback"]
+
+[pos]
+embedded = false

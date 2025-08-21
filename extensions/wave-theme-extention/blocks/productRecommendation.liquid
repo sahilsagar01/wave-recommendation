@@ -1,0 +1,175 @@
+{% schema %}
+{
+  "name": "Product Recommendation",
+  "target": "section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "product", "autofill": true },
+    { "type": "color", "id": "colour", "label": "Star Colour", "default": "#ff0000" },
+    { "type": "color", "id": "text_heading_color", "label": "Text Heading Color", "default": "#000000" },
+    {
+      "type": "range",
+      "id": "text_heading_font_size",
+      "label": "Text Heading Font Size",
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "default": 24,
+      "unit": "px"
+    },
+    { "type": "color", "id": "title_color", "label": "Title Color", "default": "#000000" },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "label": "Title Font Size",
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "default": 20,
+      "unit": "px"
+    },
+    { "type": "color", "id": "price_color", "label": "Price Color", "default": "#000000" },
+    {
+      "type": "range",
+      "id": "price_font_size",
+      "label": "Price Font Size",
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "default": 18,
+      "unit": "px"
+    },
+    { "type": "color", "id": "button_bg_color", "label": "Button Background Color", "default": "#007bff" },
+    { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#ffffff" },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "label": "Button Font Size",
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    },
+    { "type": "text", "id": "button_border", "label": "Button Border", "default": "solid" },
+    { "type": "color", "id": "button_border_color", "label": "Button Border Color", "default": "#007bff" },
+    {
+      "type": "range",
+      "id": "button_border_width",
+      "label": "Button Border Width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 1,
+      "unit": "px"
+    },
+    { "type": "color", "id": "layout_border_color", "label": "Layout Border Color", "default": "#e0e0e0" },
+    {
+      "type": "range",
+      "id": "layout_border_width",
+      "label": "Layout Border Width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 1,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "layout_border_radius",
+      "label": "Layout Border Radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    }
+  ]
+}
+{% endschema %}
+
+{% assign dummy_products = '[{"title":"Product 1","price":"$19.99","image":"https://cdn.shopify.com/s/files/1/0633/1377/2637/files/Main_b13ad453-477c-4ed1-9b43-81f3345adfd6.jpg?v=1714854970&width=823","url":"/products/product-1"},{"title":"Product 2","price":"$29.99","image":"https://cdn.shopify.com/s/files/1/0633/1377/2637/files/snowboard_sky.png?v=1714854967&width=823","url":"/products/product-2"},{"title":"Product 3","price":"$39.99","image":"https://cdn.shopify.com/s/files/1/0633/1377/2637/files/Main_9129b69a-0c7b-4f66-b6cf-c4222f18028a.jpg?v=1714854967&width=823","url":"/products/product-3"}]' %}
+
+<div
+  class="recommendation-wrapper"
+  style="border: {{ section.settings.layout_border_width }}px solid {{ section.settings.layout_border_color }}; border-radius: {{ section.settings.layout_border_radius }}px; padding: 16px;"
+>
+  <h2 style="color: {{ section.settings.text_heading_color }}; font-size: {{ section.settings.text_heading_font_size }}px;">
+    Recommended Products
+  </h2>
+  <div id="recommendation-list" class="recommendation-list" style="display: flex; gap: 24px;"></div>
+</div>
+
+<script>
+(function() {
+  // List of example handles from your store
+  
+  var handles = [
+    'the-complete-snowboard',
+  ];
+  // Pick a random handle
+  var handle = handles[Math.floor(Math.random() * handles.length)];
+  var dummyProducts = JSON.parse({{ dummy_products | json }});
+  var container = document.getElementById('recommendation-list');
+
+  function renderProducts(products) {
+    console.log('Rendering products:', products);
+    container.innerHTML = '';
+    products.forEach(function(product) {
+      var item = document.createElement('div');
+      item.className = 'recommendation-item';
+      item.style = 'border: 1px solid #eee; border-radius: 8px; padding: 12px; width: 200px;';
+      item.innerHTML = `
+        <a href="${product.url}">
+          <img src="${product.image}" alt="${product.title}" width="180" height="180" style="width: 100%; border-radius: 4px;" loading="lazy">
+        </a>
+        <div class="recommendation-title" style="color: {{ section.settings.title_color | default: '#000000' }}; font-size: {{ section.settings.title_font_size | default: 20 }}px; margin-top: 8px;">${product.title}</div>
+        <div class="recommendation-price" style="color: {{ section.settings.price_color | default: '#000000' }}; font-size: {{ section.settings.price_font_size | default: 18 }}px; margin-bottom: 8px;">${product.price}</div>
+        <a href="${product.url}" class="recommendation-btn" style="display: inline-block; background: {{ section.settings.button_bg_color | default: '#007bff' }}; color: {{ section.settings.button_text_color | default: '#ffffff' }}; font-size: {{ section.settings.button_font_size | default: 16 }}px; border: {{ section.settings.button_border_width | default: 1 }}px {{ section.settings.button_border | default: 'solid' }} {{ section.settings.button_border_color | default: '#007bff' }}; border-radius: 4px; padding: 8px 16px; text-decoration: none;">View Product</a>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  // Fetch product data by handle
+  function fetchProductIdByHandle(handle) {
+    return fetch(`/products/${handle}.js`)
+      .then(function(response) {
+        if (!response.ok) throw new Error('Product not found');
+        return response.json();
+      })
+      .catch(function() { return null; });
+  }
+
+  // Fetch recommendations by product ID
+  function fetchRecommendedProducts(productId, limit) {
+    return fetch(`${window.Shopify && window.Shopify.routes && window.Shopify.routes.root ? window.Shopify.routes.root : '/'}recommendations/products.json?product_id=${productId}&limit=${limit}`)
+      .then(function(response) { return response.json(); })
+      .then(function(data) { return data.products || []; })
+      .catch(function() { return []; });
+  }
+
+  // Main logic
+  fetchProductIdByHandle(handle).then(function(productData) {
+    if (productData && productData.id) {
+      fetchRecommendedProducts(productData.id, 4).then(function(products) {
+        if (products.length > 0) {
+          console.log('Rendering products:', products);
+          var mapped = products.map(function(p) {
+            return {
+              title: p.title,
+              price: p.price ? p.price : '',
+              image: p.featured_image ? p.featured_image : p.images[0],
+              url: p.handle ? ('/products/' + p.handle) : '#'
+            };
+          });
+          renderProducts(mapped);
+        } else {
+          renderProducts(dummyProducts);
+        }
+      });
+    } else {
+      renderProducts(dummyProducts);
+    }
+  });
+})();
+</script>
