@@ -471,6 +471,13 @@ body.overflow-hidden {
         const progress = Math.min((cartTotal / bar.goalAmount) * 100, 100);
         const remaining = Math.max(bar.goalAmount - cartTotal, 0);
 
+        console.log('Progress Bar Debug:', {
+          cartTotal,
+          goalAmount: bar.goalAmount,
+          progress: progress.toFixed(2) + '%',
+          remaining: remaining.toFixed(2)
+        });
+
         html += `
           <div class="wave-progress-bar-container">
             <h4 class="wave-progress-bar-title" style="color: ${bar.textColor};">
@@ -485,11 +492,12 @@ body.overflow-hidden {
                 width: ${progress}%;
                 background-color: ${bar.progressColor};
                 border-radius: ${bar.borderRadius}px;
+                display: block !important;
               "></div>
             </div>
             <div class="wave-progress-bar-text" style="color: ${bar.textColor};">
-              ${bar.showPercentage ? `${Math.round(progress)}%` : ''}
-              ${bar.showAmount ? `$${remaining.toFixed(2)} to ${bar.goalText}` : bar.goalText}
+              ${bar.showPercentage ? `${Math.round(progress)}% - ` : ''}
+              ${bar.showAmount ? `Rs. ${remaining.toFixed(2)} to ${bar.goalText}` : bar.goalText}
             </div>
           </div>
         `;

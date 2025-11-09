@@ -668,26 +668,89 @@ function ProgressBarManager() {
               placeholder="e.g., Free Shipping"
             />
 
-            <TextField
-              label="Background Color"
-              value={backgroundColor}
-              onChange={setBackgroundColor}
-              autoComplete="off"
-            />
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '13px' }}>
+                Background Color
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  style={{
+                    width: '60px',
+                    height: '38px',
+                    border: '1px solid #c9cccf',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                />
+                <TextField
+                  value={backgroundColor}
+                  onChange={setBackgroundColor}
+                  autoComplete="off"
+                  placeholder="#e5e7eb"
+                  connectedLeft={<div style={{ width: '60px' }} />}
+                />
+              </div>
+            </div>
 
-            <TextField
-              label="Progress Color"
-              value={progressColor}
-              onChange={setProgressColor}
-              autoComplete="off"
-            />
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '13px' }}>
+                Progress Color
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="color"
+                  value={progressColor}
+                  onChange={(e) => setProgressColor(e.target.value)}
+                  style={{
+                    width: '60px',
+                    height: '38px',
+                    border: '1px solid #c9cccf',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                />
+                <TextField
+                  value={progressColor}
+                  onChange={setProgressColor}
+                  autoComplete="off"
+                  placeholder="#10b981"
+                  connectedLeft={<div style={{ width: '60px' }} />}
+                />
+              </div>
+            </div>
 
-            <TextField
-              label="Text Color"
-              value={textColor}
-              onChange={setTextColor}
-              autoComplete="off"
-            />
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '13px' }}>
+                Text Color
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="color"
+                  value={textColor}
+                  onChange={(e) => setTextColor(e.target.value)}
+                  style={{
+                    width: '60px',
+                    height: '38px',
+                    border: '1px solid #c9cccf',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                />
+                <TextField
+                  value={textColor}
+                  onChange={setTextColor}
+                  autoComplete="off"
+                  placeholder="#000000"
+                  connectedLeft={<div style={{ width: '60px' }} />}
+                />
+              </div>
+            </div>
 
             <Checkbox
               label="Show Percentage"
