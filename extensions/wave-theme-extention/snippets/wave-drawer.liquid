@@ -1,0 +1,755 @@
+{% comment %}
+  Wave Drawer Snippet
+  This is rendered by the Wave Drawer block
+{% endcomment %}
+
+<style>
+/* Hide theme's default cart drawer and overlay */
+cart-drawer,
+cart-drawer-items,
+[id*="cart-drawer"],
+[id*="CartDrawer"],
+.drawer--cart,
+.cart-drawer,
+.cart-drawer__overlay {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.overflow-hidden-mobile,
+body.overflow-hidden-tablet,
+body.overflow-hidden {
+  overflow: auto !important;
+}
+
+#wave-drawer-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#wave-drawer-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+#wave-drawer {
+  position: fixed;
+  top: 0;
+  height: 100%;
+  background: white;
+  z-index: 9999;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  text-align: left;
+  direction: ltr;
+}
+
+#wave-drawer.left {
+  left: 0;
+  transform: translateX(-100%);
+}
+
+#wave-drawer.right {
+  right: 0;
+  transform: translateX(100%);
+}
+
+#wave-drawer.ready {
+  opacity: 1;
+  visibility: visible;
+}
+
+#wave-drawer.active {
+  transform: translateX(0);
+}
+
+.wave-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 10;
+}
+
+.wave-drawer-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.wave-drawer-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.wave-drawer-content {
+  padding: 20px 20px 100px 20px;
+  text-align: left;
+  overflow-y: auto;
+  height: calc(100% - 60px);
+}
+
+.wave-drawer-content * {
+  text-align: left;
+}
+
+.wave-drawer-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: white;
+  padding: 15px 20px;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.wave-announcement {
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+.wave-announcement h3 {
+  margin: 0 0 8px 0;
+}
+
+.wave-announcement p {
+  margin: 0;
+}
+
+.wave-announcement a {
+  color: inherit;
+  text-decoration: underline;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.wave-progress-bar-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.wave-progress-bar-title {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+.wave-progress-bar-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.wave-progress-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.wave-progress-bar-text {
+  margin-top: 8px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.wave-recommendations {
+  margin-top: 20px;
+}
+
+.wave-recommendations h3 {
+  margin: 0 0 15px 0;
+}
+
+.wave-recommendations-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.wave-recommendations-grid.grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.wave-recommendations-grid.list {
+  grid-template-columns: 1fr;
+}
+
+.wave-recommendation-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.wave-recommendation-card:hover {
+  transform: translateY(-2px);
+}
+
+.wave-recommendation-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.wave-recommendation-info {
+  padding: 12px;
+}
+
+.wave-recommendation-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.wave-recommendation-price {
+  margin: 0 0 10px 0;
+}
+
+.wave-recommendation-button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.wave-recommendation-button:hover {
+  opacity: 0.9;
+}
+
+.wave-drawer-trigger {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s;
+  z-index: 9997;
+}
+
+.wave-drawer-trigger:hover {
+  transform: scale(1.1);
+}
+</style>
+
+<div id="wave-drawer-overlay"></div>
+<div id="wave-drawer">
+  <div class="wave-drawer-header">
+    <h2 id="wave-drawer-title">Cart</h2>
+    <button class="wave-drawer-close" id="wave-drawer-close">&times;</button>
+  </div>
+  <div class="wave-drawer-content" id="wave-drawer-content">
+    <!-- Content will be dynamically loaded -->
+  </div>
+  <div class="wave-drawer-footer" id="wave-drawer-footer" style="display: none;">
+    <!-- Checkout button will be moved here -->
+  </div>
+</div>
+<button class="wave-drawer-trigger" id="wave-drawer-trigger" style="display: none;">&#9776;</button>
+
+<script>
+(function() {
+  const SHOP_NAME = Shopify.shop;
+  let drawerData = null;
+  let cartTotal = 0;
+
+  // Initialize
+  async function init() {
+    try {
+      // Use app proxy URL
+      let apiUrl = `/apps/wave/drawer?shop=${SHOP_NAME}`;
+
+      console.log('Fetching drawer data from:', apiUrl);
+      const response = await fetch(apiUrl);
+
+      if (!response.ok) {
+        const errorMsg = `API returned ${response.status} ${response.statusText}. Make sure you've deployed the app with 'npm run deploy'.`;
+        console.error('API response not OK:', response.status, response.statusText);
+        showDefaultDrawer(errorMsg);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Drawer data received:', data);
+
+      if (!data || data.error) {
+        const errorMsg = data?.error || 'API returned invalid data';
+        console.error('API error:', errorMsg);
+        showDefaultDrawer(errorMsg);
+        return;
+      }
+
+      if (!data.enabled) {
+        console.log('Drawer is disabled in admin settings');
+        document.getElementById('wave-drawer-trigger').style.display = 'none';
+        return;
+      }
+
+      if (!data.settings) {
+        console.error('No settings found in API response');
+        showDefaultDrawer('Settings not found. Please configure drawer in admin.');
+        return;
+      }
+
+      drawerData = data;
+      applyDrawerSettings(data.settings);
+      renderDrawerContent(data);
+      setupEventListeners(data.settings);
+
+      // Get cart total
+      updateCartTotal();
+    } catch (error) {
+      console.error('Failed to initialize Wave Drawer:', error);
+      showDefaultDrawer(`Network error: ${error.message}. Is the app running?`);
+    }
+  }
+
+  function showDefaultDrawer(errorMessage) {
+    console.log('Showing default drawer. Error:', errorMessage);
+    const drawer = document.getElementById('wave-drawer');
+    drawer.style.width = '400px';
+    drawer.style.backgroundColor = '#ffffff';
+    drawer.style.color = '#000000';
+    drawer.classList.add('right');
+    drawer.classList.add('ready'); // Make drawer visible
+
+    const content = document.getElementById('wave-drawer-content');
+    content.innerHTML = `
+      <div style="padding: 20px;">
+        <div style="background: #fee; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #fcc;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #c00;">⚠️ Configuration Not Loaded</h3>
+          <p style="margin: 0; font-size: 13px; color: #666;">
+            ${errorMessage || 'Unable to fetch drawer configuration.'}
+          </p>
+        </div>
+        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px;">Next Steps:</h3>
+          <ol style="margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; color: #666;">
+            <li style="margin-bottom: 8px;">Make sure app is deployed: <code>npm run deploy</code></li>
+            <li style="margin-bottom: 8px;">Enable drawer in admin: Apps → Drawer Settings</li>
+            <li style="margin-bottom: 8px;">Add announcements and configure features</li>
+            <li>Check browser console (F12) for errors</li>
+          </ol>
+        </div>
+        <div style="text-align: center; padding: 10px; border: 2px dashed #e5e7eb; border-radius: 8px;">
+          <p style="color: #999; font-size: 12px; margin: 0;">
+            API URL: <code>/apps/wave/drawer?shop=${Shopify.shop}</code>
+          </p>
+        </div>
+      </div>
+    `;
+
+    setupEventListeners({ openOnCartClick: true });
+  }
+
+  function applyDrawerSettings(settings) {
+    const drawer = document.getElementById('wave-drawer');
+    const closeBtn = document.getElementById('wave-drawer-close');
+    const triggerBtn = document.getElementById('wave-drawer-trigger');
+
+    drawer.style.width = settings.width + 'px';
+    drawer.style.backgroundColor = settings.backgroundColor;
+    drawer.style.color = settings.textColor;
+    closeBtn.style.color = settings.closeButtonColor;
+
+    drawer.classList.add(settings.position);
+    drawer.classList.add('ready'); // Make drawer visible now that it's configured
+
+    // Show/hide trigger button based on settings
+    if (settings.showTriggerButton === false) {
+      triggerBtn.style.display = 'none';
+    }
+  }
+
+  async function renderDrawerContent(data) {
+    const content = document.getElementById('wave-drawer-content');
+
+    // Get component order from settings, default to cart first
+    const componentOrder = data.settings?.componentOrder || ['cart', 'announcements', 'progress', 'recommendations'];
+
+    // Create component renderers
+    const componentRenderers = {
+      cart: async () => await renderCartItems(),
+      announcements: async () => await renderAnnouncements(data),
+      progress: async () => await renderProgressBars(data),
+      recommendations: async () => await renderRecommendations(data),
+    };
+
+    // Render components in the specified order
+    let html = '';
+    for (const componentId of componentOrder) {
+      if (componentRenderers[componentId]) {
+        html += await componentRenderers[componentId]();
+      }
+    }
+
+    content.innerHTML = html;
+
+    // Load recommendation products if enabled
+    if (data.recommendationSettings && data.recommendationSettings.isEnabled) {
+      loadRecommendations(data.recommendationSettings);
+    }
+  }
+
+  async function renderAnnouncements(data) {
+    let html = '';
+    if (data.announcements && data.announcements.length > 0) {
+      data.announcements.forEach(announcement => {
+        html += `
+          <div class="wave-announcement" style="
+            background-color: ${announcement.backgroundColor};
+            color: ${announcement.textColor};
+          ">
+            <h3 style="font-size: ${announcement.fontSize}px; font-weight: ${announcement.fontWeight};">
+              ${announcement.title}
+            </h3>
+            <p>${announcement.message}</p>
+            ${announcement.link ? `<a href="${announcement.link}">${announcement.linkText || 'Learn more'}</a>` : ''}
+          </div>
+        `;
+      });
+    }
+    return html;
+  }
+
+  async function renderProgressBars(data) {
+    let html = '';
+    if (data.progressBars && data.progressBars.length > 0) {
+      data.progressBars.forEach(bar => {
+        const progress = Math.min((cartTotal / bar.goalAmount) * 100, 100);
+        const remaining = Math.max(bar.goalAmount - cartTotal, 0);
+
+        html += `
+          <div class="wave-progress-bar-container">
+            <h4 class="wave-progress-bar-title" style="color: ${bar.textColor};">
+              ${bar.title}
+            </h4>
+            <div class="wave-progress-bar-wrapper" style="
+              height: ${bar.height}px;
+              background-color: ${bar.backgroundColor};
+              border-radius: ${bar.borderRadius}px;
+            ">
+              <div class="wave-progress-bar-fill" style="
+                width: ${progress}%;
+                background-color: ${bar.progressColor};
+                border-radius: ${bar.borderRadius}px;
+              "></div>
+            </div>
+            <div class="wave-progress-bar-text" style="color: ${bar.textColor};">
+              ${bar.showPercentage ? `${Math.round(progress)}%` : ''}
+              ${bar.showAmount ? `$${remaining.toFixed(2)} to ${bar.goalText}` : bar.goalText}
+            </div>
+          </div>
+        `;
+      });
+    }
+    return html;
+  }
+
+  async function renderRecommendations(data) {
+    let html = '';
+    if (data.recommendationSettings && data.recommendationSettings.isEnabled) {
+      const settings = data.recommendationSettings;
+      html += `
+        <div class="wave-recommendations">
+          <h3 style="color: ${settings.titleColor}; font-size: ${settings.titleFontSize}px;">
+            ${settings.title}
+          </h3>
+          <div class="wave-recommendations-grid ${settings.layout}" id="wave-recommendations-grid">
+            <!-- Products will be loaded here -->
+          </div>
+        </div>
+      `;
+    }
+    return html;
+  }
+
+  async function loadRecommendations(settings) {
+    try {
+      const response = await fetch('/recommendations/products.json?limit=' + settings.numberOfProducts);
+      const data = await response.json();
+
+      const grid = document.getElementById('wave-recommendations-grid');
+      if (!grid || !data.products) return;
+
+      grid.innerHTML = data.products.map(product => `
+        <div class="wave-recommendation-card" style="
+          background-color: ${settings.cardBackgroundColor};
+          border-radius: ${settings.cardBorderRadius}px;
+        ">
+          <img
+            src="${product.featured_image}"
+            alt="${product.title}"
+            class="wave-recommendation-image"
+          />
+          <div class="wave-recommendation-info">
+            <h4 class="wave-recommendation-title" style="
+              color: ${settings.titleColor};
+              font-size: ${settings.titleFontSize}px;
+            ">
+              ${product.title}
+            </h4>
+            ${settings.showPrice ? `
+              <p class="wave-recommendation-price" style="
+                color: ${settings.priceColor};
+                font-size: ${settings.priceFontSize}px;
+              ">
+                ${formatMoney(product.price)}
+              </p>
+            ` : ''}
+            ${settings.showAddToCart ? `
+              <button
+                class="wave-recommendation-button"
+                onclick="addToCart(${product.variants[0].id})"
+                style="
+                  background-color: ${settings.buttonBackgroundColor};
+                  color: ${settings.buttonTextColor};
+                  font-size: ${settings.buttonFontSize}px;
+                "
+              >
+                Add to Cart
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    } catch (error) {
+      console.error('Failed to load recommendations:', error);
+    }
+  }
+
+  async function renderCartItems() {
+    try {
+      const response = await fetch('/cart.js');
+      const cart = await response.json();
+
+      const footer = document.getElementById('wave-drawer-footer');
+
+      if (!cart.items || cart.items.length === 0) {
+        footer.style.display = 'none';
+        return `
+          <div style="padding: 20px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+            <p style="color: #999;">Your cart is empty</p>
+          </div>
+        `;
+      }
+
+      // Show footer and add checkout button
+      footer.style.display = 'block';
+      footer.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="font-size: 16px; font-weight: 500;">Subtotal:</span>
+          <span style="font-size: 16px; font-weight: 600;">Rs. ${(cart.total_price / 100).toFixed(2)}</span>
+        </div>
+        <a href="/checkout" style="display: block; width: 100%; padding: 14px; background: #000; color: #fff; text-align: center; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+          Checkout
+        </a>
+      `;
+
+      let html = '<div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 15px;">';
+      html += '<h3 style="padding: 0 0 15px 0; margin: 0; font-size: 18px;">Your Cart</h3>';
+
+      cart.items.forEach(item => {
+        const price = (item.final_line_price / 100).toFixed(2);
+        const itemPrice = (item.final_price / 100).toFixed(2);
+
+        html += `
+          <div style="display: flex; gap: 15px; padding: 15px 0; border-top: 1px solid #f3f4f6;">
+            <img src="${item.image}" alt="${item.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 500;">${item.title}</h4>
+              ${item.variant_title ? `<p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">${item.variant_title}</p>` : ''}
+              <p style="margin: 0; font-size: 14px; font-weight: 600;">Rs. ${price}</p>
+              <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Qty: ${item.quantity} × Rs. ${itemPrice}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      return html;
+    } catch (error) {
+      console.error('Failed to load cart items:', error);
+      return '';
+    }
+  }
+
+  async function updateCartTotal() {
+    try {
+      const response = await fetch('/cart.js');
+      const cart = await response.json();
+      cartTotal = cart.total_price / 100;
+
+      if (drawerData) {
+        renderDrawerContent(drawerData);
+      }
+    } catch (error) {
+      console.error('Failed to get cart total:', error);
+    }
+  }
+
+  function setupEventListeners(settings) {
+    const trigger = document.getElementById('wave-drawer-trigger');
+    const drawer = document.getElementById('wave-drawer');
+    const overlay = document.getElementById('wave-drawer-overlay');
+    const closeBtn = document.getElementById('wave-drawer-close');
+
+    function openDrawer() {
+      drawer.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Update cart total when drawer opens
+      updateCartTotal();
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    trigger.addEventListener('click', openDrawer);
+    closeBtn.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+
+    // Only attach to cart buttons if the setting is enabled
+    if (settings && settings.openOnCartClick !== false) {
+      // Find and attach to cart icon/button
+      // This works with most Shopify themes
+      const cartSelectors = [
+        'a[href="/cart"]',
+        'a[href*="/cart"]',
+        '.cart-link',
+        '.header__icon--cart',
+        '[data-cart-icon]',
+        '.cart-icon',
+        '#cart-icon-bubble',
+        '.icon-cart',
+        'cart-icon-bubble',
+        '[aria-label*="cart" i]',
+        '[aria-label*="Cart" i]',
+        'summary.header__icon.header__icon--cart'
+      ];
+
+      let attachedCount = 0;
+      cartSelectors.forEach(selector => {
+        const cartButtons = document.querySelectorAll(selector);
+        cartButtons.forEach(button => {
+          button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation(); // Prevent other listeners
+            openDrawer();
+            return false;
+          }, true); // Use capture phase to intercept before theme handlers
+          attachedCount++;
+        });
+      });
+
+      console.log('Wave Drawer: Event listeners attached to', attachedCount, 'cart button(s)');
+
+      // Also hide any existing cart drawers
+      const themeCartDrawers = document.querySelectorAll('cart-drawer, [id*="cart-drawer"], .drawer--cart, #CartDrawer');
+      themeCartDrawers.forEach(drawer => {
+        drawer.style.display = 'none';
+      });
+    }
+  }
+
+  // Expose openDrawer function globally so it can be called from anywhere
+  window.openWaveDrawer = function() {
+    const drawer = document.getElementById('wave-drawer');
+    const overlay = document.getElementById('wave-drawer-overlay');
+    drawer.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    updateCartTotal();
+  };
+
+  window.closeWaveDrawer = function() {
+    const drawer = document.getElementById('wave-drawer');
+    const overlay = document.getElementById('wave-drawer-overlay');
+    drawer.classList.remove('active');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  window.addToCart = async function(variantId) {
+    try {
+      const response = await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: variantId,
+          quantity: 1,
+        }),
+      });
+
+      if (response.ok) {
+        await updateCartTotal();
+        alert('Product added to cart!');
+      }
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    }
+  };
+
+  function formatMoney(cents) {
+    return '$' + (cents / 100).toFixed(2);
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Listen for cart updates
+  document.addEventListener('cart:updated', updateCartTotal);
+})();
+</script>

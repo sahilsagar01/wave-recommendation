@@ -8,7 +8,6 @@ embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-04"
@@ -30,3 +29,8 @@ redirect_urls = ["https://provided-boston-formed-numerical.trycloudflare.com/aut
 
 [pos]
 embedded = false
+
+[app_proxy]
+url = "https://provided-boston-formed-numerical.trycloudflare.com"
+subpath = "wave"
+prefix = "apps"

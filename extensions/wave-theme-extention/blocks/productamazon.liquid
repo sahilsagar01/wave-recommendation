@@ -1,0 +1,493 @@
+{% schema %}
+{
+  "name": "Product Recommendation",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    { "type": "color", "id": "background_color", "label": "Background Color", "default": "#f7f7f7" },
+    { "type": "color", "id": "header_color", "label": "Header Text Color", "default": "#363434" },
+    { "type": "range", "id": "header_font_size", "label": "Header Font Size", "min": 10, "max": 48, "step": 1, "default": 36, "unit": "px" },
+    { "type": "color", "id": "title_color", "label": "Product Title Color", "default": "#000000" },
+    { "type": "range", "id": "title_font_size", "label": "Product Title Font Size", "min": 10, "max": 48, "step": 1, "default": 20, "unit": "px" },
+    { "type": "color", "id": "price_color", "label": "Price Color", "default": "#000000" },
+    { "type": "range", "id": "price_font_size", "label": "Price Font Size", "min": 10, "max": 48, "step": 1, "default": 18, "unit": "px" },
+    { "type": "color", "id": "button_bg_color", "label": "Button Background Color", "default": "#292d69" },
+    { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#ffffff" },
+    { "type": "range", "id": "button_font_size", "label": "Button Font Size", "min": 10, "max": 48, "step": 1, "default": 15, "unit": "px" },
+    { "type": "color", "id": "button_border_color", "label": "Button Border Color", "default": "#292d69" },
+    { "type": "range", "id": "button_border_radius", "label": "Button Border Radius", "min": 0, "max": 20, "step": 1, "default": 6, "unit": "px" },
+    { "type": "color", "id": "layout_border_color", "label": "Layout Border Color", "default": "#e0e0e0" },
+    { "type": "range", "id": "layout_border_width", "label": "Layout Border Width", "min": 0, "max": 10, "step": 1, "default": 0, "unit": "px" },
+    { "type": "range", "id": "layout_border_radius", "label": "Layout Border Radius", "min": 0, "max": 50, "step": 1, "default": 8, "unit": "px" }
+  ]
+}
+{% endschema %}
+
+<style>
+.amazon-container {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: {{ block.settings.background_color }};
+  border: {{ block.settings.layout_border_width }}px solid {{ block.settings.layout_border_color }};
+  border-radius: {{ block.settings.layout_border_radius }}px;
+}
+.amazon-header {
+  text-align: center;
+  margin: 0;
+  margin-bottom: 3rem;
+  font-weight: 400;
+  font-size: {{ block.settings.header_font_size }}px;
+  color: {{ block.settings.header_color }};
+}
+.main-content-amazon {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+.images-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 70%;
+}
+.image-wrapper {
+  width: 30%;
+  position: relative;
+}
+.plus-sign {
+  font-size: 18px;
+  color: #000;
+  margin: 0 8px;
+}
+.cart-section {
+  width: 30%;
+}
+.total-price-label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.price-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.strikethrough-price {
+  text-decoration: line-through;
+  color: #9CA3AF;
+  font-size: 15px;
+  margin-left: 6px;
+}
+.add-to-cart-btn {
+  margin-top: 18px;
+  border-radius: {{ block.settings.button_border_radius }}px;
+  background: {{ block.settings.button_bg_color }};
+  color: {{ block.settings.button_text_color }};
+  border: 1px solid {{ block.settings.button_border_color }};
+  font-size: {{ block.settings.button_font_size }}px;
+  padding: 10px 18px;
+  width: 100%;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.add-to-cart-btn:hover {
+  background: #1a1d4d;
+}
+.products-list {
+  margin-top: 24px;
+}
+.product-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1em;
+  margin-bottom: 10px;
+}
+.product-title {
+  font-weight: bold;
+  cursor: pointer;
+  overflow: hidden;
+  width: fit-content;
+  color: {{ block.settings.title_color }};
+  font-size: {{ block.settings.title_font_size }}px;
+}
+.product-title.disabled {
+  color: #9CA3AF;
+  opacity: 0.7;
+}
+.variant-select {
+  min-width: 120px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+}
+.variant-select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+.product-price {
+  font-weight: 500;
+  min-width: 60px;
+  text-align: right;
+  color: {{ block.settings.price_color }};
+  font-size: {{ block.settings.price_font_size }}px;
+}
+.product-price.disabled {
+  opacity: 0.7;
+  color: #9CA3AF;
+}
+@media (max-width: 1024px) {
+  .main-content-amazon { flex-direction: column; align-items: center; }
+  .images-section { width: 100%; }
+  .cart-section { width: 50%; align-self: flex-start; }
+  .add-to-cart-btn { width: 100%; }
+}
+@media (max-width: 768px) {
+  .amazon-container { padding: 16px; }
+  .amazon-header { font-size: 20px; }
+  .product-list-item { flex-wrap: wrap; }
+  .product-title { max-width: 150px; }
+}
+@media (max-width: 480px) {
+  .image-wrapper { width: 27%; }
+  .cart-section { width: 100%; align-self: center; }
+  .price-display { flex-direction: column; align-items: flex-start; }
+  .images-section { justify-content: space-between; }
+  .product-title { max-width: 120px; }
+}
+</style>
+
+<div class="amazon-container" style="display:none">
+  <h2 class="amazon-header">Buy the complete look</h2>
+  <div class="main-content-amazon">
+    <div class="images-section" id="amazon-images-section"></div>
+    <div class="cart-section">
+      <div class="total-price-label">Total price:</div>
+      <div class="price-display">
+        <strong id="amazon-total-price">--</strong>
+        <span class="strikethrough-price" id="amazon-original-price" style="display:none"></span>
+      </div>
+      <button class="add-to-cart-btn" id="amazon-add-all-btn">ADD SELECTED TO CART</button>
+    </div>
+  </div>
+  <div class="products-list" id="amazon-products-list"></div>
+</div>
+
+<script>
+(function() {
+  // Get product handle from URL
+  function getProductHandleFromUrl() {
+    var pathParts = window.location.pathname.split('/').filter(Boolean);
+    var productsIndex = pathParts.indexOf('products');
+    if (productsIndex !== -1 && pathParts.length > productsIndex + 1) {
+      return pathParts[productsIndex + 1];
+    }
+    return pathParts[pathParts.length - 1];
+  }
+
+  // Fetch product data by handle
+  function fetchProductIdByHandle(handle) {
+    return fetch('/products/' + handle + '.js')
+      .then(function(response) {
+        if (!response.ok) throw new Error('Product not found');
+        return response.json();
+      })
+      .catch(function() { return null; });
+  }
+
+  // Fetch recommendations by product ID from new API
+  function fetchRecommendedProducts(productId, limit) {
+    const shop = '{{ shop.domain }}';
+    const apiUrl = `https://liberia-offense-dominant-dense.trycloudflare.com/api/v2/recommendation/product?shop=${shop}&type=product-cross-sell&productId=${productId}`;
+    return fetch(apiUrl, { method: 'GET' })
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data.success && data.data && data.data.products && data.data.products.length > 0) {
+          return data.data.products;
+        }
+        return [];
+      })
+      .catch(function() { return []; });
+  }
+
+  function getDisplayTitle(product) {
+    var baseTitle = product.title || 'Product';
+    if (!product.variants || product.variants.length <= 1) {
+      return baseTitle;
+    }
+    var selectedVariant = product.variants.find(function(v) { 
+      return v.id == product.selectedVariantId; 
+    });
+    if (selectedVariant && selectedVariant.title && selectedVariant.title !== 'Default Title' && selectedVariant.title !== 'Default') {
+      return baseTitle + ' - ' + selectedVariant.title;
+    }
+    return baseTitle;
+  }
+
+  function getCurrentPrice(product) {
+    if (product.selectedVariantId && product.variants && product.variants.length > 0) {
+      var selectedVariant = product.variants.find(function(v) { 
+        return v.id == product.selectedVariantId; 
+      });
+      if (selectedVariant) {
+        return selectedVariant.discountedPrice ? parseFloat(selectedVariant.discountedPrice) : parseFloat(selectedVariant.price);
+      }
+    }
+    return product.discountedPrice ? parseFloat(product.discountedPrice) : parseFloat(product.price || 0);
+  }
+
+  function getOriginalPrice(product) {
+    if (product.selectedVariantId && product.variants && product.variants.length > 0) {
+      var selectedVariant = product.variants.find(function(v) { 
+        return v.id == product.selectedVariantId; 
+      });
+      if (selectedVariant && selectedVariant.discountedPrice && selectedVariant.price && selectedVariant.discountedPrice !== selectedVariant.price) {
+        return parseFloat(selectedVariant.price);
+      }
+    } else if (product.discountedPrice && product.price && product.discountedPrice !== product.price) {
+      return parseFloat(product.price);
+    }
+    return null;
+  }
+
+  function renderProducts(products) {
+    function getProductUrl(product) {
+      if (product.variants && product.variants.length > 1 && product.selectedVariantId) {
+        return product.url + '?variant=' + product.selectedVariantId;
+      }
+      return product.url;
+    }
+
+    var imagesSection = document.getElementById('amazon-images-section');
+    imagesSection.innerHTML = '';
+    products.filter(function(p) { return p.selected !== false; }).forEach(function(product, idx) {
+      if (idx > 0) {
+        var plus = document.createElement('span');
+        plus.className = 'plus-sign';
+        plus.innerText = '+';
+        imagesSection.appendChild(plus);
+      }
+      var imgWrap = document.createElement('span');
+      imgWrap.className = 'image-wrapper';
+      imgWrap.style.cursor = 'pointer';
+      imgWrap.onclick = function() { window.location.href = getProductUrl(product); };
+      var img = document.createElement('img');
+      img.src = product.image;
+      img.alt = getDisplayTitle(product);
+      img.style.width = '100%';
+      img.style.border = '1px solid #e5e7eb';
+      img.style.borderRadius = '4px';
+      img.className = 'product-image';
+      imgWrap.appendChild(img);
+      imagesSection.appendChild(imgWrap);
+    });
+
+    var list = document.getElementById('amazon-products-list');
+    list.innerHTML = '';
+    products.forEach(function(product, idx) {
+      var item = document.createElement('div');
+      item.className = 'product-list-item';
+
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = product.selected !== false;
+      checkbox.onchange = function(e) {
+        product.selected = e.target.checked;
+        renderProducts(products);
+        updateTotalPrice(products);
+      };
+      item.appendChild(checkbox);
+
+      var title = document.createElement('span');
+      title.className = 'product-title' + (product.selected === false ? ' disabled' : '');
+      title.innerText = getDisplayTitle(product);
+      title.style.cursor = 'pointer';
+      title.onclick = function() { window.location.href = getProductUrl(product); };
+      item.appendChild(title);
+
+      if (product.variants && product.variants.length > 1) {
+        var select = document.createElement('select');
+        select.className = 'variant-select';
+        select.disabled = product.selected === false;
+        select.onchange = function(e) {
+          var selectedOption = e.target.selectedOptions[0];
+          product.selectedVariantId = selectedOption.value;
+          var selectedVariant = product.variants.find(function(v) { return v.id == product.selectedVariantId; });
+          title.innerText = getDisplayTitle(product);
+          price.innerHTML = '₹' + getCurrentPrice(product).toFixed(2);
+          var originalPrice = getOriginalPrice(product);
+          if (originalPrice && originalPrice > getCurrentPrice(product)) {
+            price.innerHTML += ` <span class="strikethrough-price">₹${originalPrice.toFixed(2)}</span>`;
+          }
+          imgWrap.onclick = function() { window.location.href = getProductUrl(product); };
+          title.onclick = function() { window.location.href = getProductUrl(product); };
+          updateTotalPrice(products);
+        };
+        product.variants.forEach(function(variant) {
+          var option = document.createElement('option');
+          option.value = variant.id;
+          option.setAttribute('data-price', variant.price);
+          option.innerText = variant.title;
+          if (variant.id == product.selectedVariantId) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        });
+        item.appendChild(select);
+      }
+
+      var price = document.createElement('span');
+      price.className = 'product-price' + (product.selected === false ? ' disabled' : '');
+      price.innerHTML = '₹' + getCurrentPrice(product).toFixed(2);
+      var originalPrice = getOriginalPrice(product);
+      if (originalPrice && originalPrice > getCurrentPrice(product)) {
+        price.innerHTML += ` <span class="strikethrough-price">₹${originalPrice.toFixed(2)}</span>`;
+      }
+      item.appendChild(price);
+
+      list.appendChild(item);
+    });
+
+    updateTotalPrice(products);
+  }
+
+  function updateTotalPrice(products) {
+    var total = 0;
+    var originalTotal = 0;
+    var hasDiscount = false;
+    products.forEach(function(product) {
+      if (product.selected !== false) {
+        total += getCurrentPrice(product);
+        var originalPrice = getOriginalPrice(product);
+        if (originalPrice && originalPrice > getCurrentPrice(product)) {
+          originalTotal += originalPrice;
+          hasDiscount = true;
+        } else {
+          originalTotal += getCurrentPrice(product);
+        }
+      }
+    });
+    document.getElementById('amazon-total-price').innerText = '₹' + total.toFixed(2);
+    var originalPriceElem = document.getElementById('amazon-original-price');
+    if (hasDiscount && originalTotal > total) {
+      originalPriceElem.style.display = '';
+      originalPriceElem.innerText = '₹' + originalTotal.toFixed(2);
+    } else {
+      originalPriceElem.style.display = 'none';
+    }
+  }
+
+  document.getElementById('amazon-add-all-btn').onclick = function() {
+    var selectedProducts = [];
+    var products = window.recommendationProducts || [];
+    products.forEach(function(product) {
+      if (product.selected !== false) {
+        selectedProducts.push({
+          id: product.selectedVariantId || (product.variants && product.variants[0] ? product.variants[0].id : null),
+          quantity: 1,
+          title: getDisplayTitle(product),
+          price: getCurrentPrice(product)
+        });
+      }
+    });
+    if (selectedProducts.length === 0) {
+      alert('Please select at least one product to add to cart.');
+      return;
+    }
+    var formData = {
+      'items': selectedProducts.map(function(item) {
+        return {
+          'id': item.id,
+          'quantity': item.quantity,
+          'properties': { __recommended_amazon: true },
+        };
+      })
+    };
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+     window.location.href = '/cart';
+    })
+    .catch(function(error) {
+      console.error('Error adding to cart:', error);
+      alert('There was an error adding products to cart. Please try again.');
+    });
+  };
+
+  // --- Main logic ---
+  var handle = getProductHandleFromUrl();
+  if (!handle) return;
+
+  fetchProductIdByHandle(handle).then(function(mainProductData) {
+    if (mainProductData && mainProductData.id) {
+      fetchRecommendedProducts(mainProductData.id, 2).then(function(products) {
+        if (products.length > 0) {
+          // Map main product
+          var mainProduct = {
+            title: mainProductData.title,
+            price: mainProductData.price / 100,
+            discountedPrice: mainProductData.compare_at_price && mainProductData.compare_at_price > mainProductData.price ? (mainProductData.price / 100) : null,
+            image: mainProductData.featured_image,
+            url: '/products/' + mainProductData.handle,
+            variants: mainProductData.variants ? mainProductData.variants.map(function(v) {
+              return {
+                id: v.id,
+                title: v.title,
+                price: v.price / 100,
+                discountedPrice: v.compare_at_price && v.compare_at_price > v.price ? (v.price / 100) : null,
+                image: v.featured_image
+              };
+            }) : [],
+            selected: true,
+            selectedVariantId: mainProductData.variants && mainProductData.variants[0] ? mainProductData.variants[0].id : null
+          };
+
+          // Map recommended products (already limited to 2)
+          var mapped = products.map(function(p) {
+            var firstVariant = p.variants && p.variants[0] ? p.variants[0] : null;
+            return {
+              title: p.title,
+              price: p.price,
+              discountedPrice: p.discountedPrice,
+              image: p.image,
+              url: '/products/' + p.handle,
+              variants: p.variants ? p.variants.map(function(v) {
+                return {
+                  id: v.id,
+                  title: v.title,
+                  price: v.price,
+                  discountedPrice: v.discountedPrice,
+                  image: v.image
+                };
+              }) : [],
+              selected: true,
+              selectedVariantId: firstVariant ? firstVariant.id : null
+            };
+          });
+
+          // Combine main product and recommended products
+          var allProducts = [mainProduct, ...mapped];
+          window.recommendationProducts = allProducts;
+          document.querySelector('.amazon-container').style.display = '';
+          renderProducts(allProducts);
+        } else {
+          document.querySelector('.amazon-container').style.display = 'none';
+        }
+      });
+    } else {
+      document.querySelector('.amazon-container').style.display = 'none';
+    }
+  });
+})();
+</script> 

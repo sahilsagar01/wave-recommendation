@@ -1,0 +1,342 @@
+{% schema %}
+{
+  "name": "Cart Recommendation",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["cart"]
+  },
+  "settings": [
+    { "type": "text", "id": "header_text", "label": "Header Text", "default": "Recommended for you" },
+    { "type": "color", "id": "text_heading_color", "label": "Heading Color", "default": "#000000" },
+    { "type": "range", "id": "text_heading_font_size", "label": "Heading Font Size", "min": 4, "max": 48, "step": 1, "default": 24, "unit": "px" },
+    { "type": "color", "id": "title_color", "label": "Product Title Color", "default": "#000000" },
+    { "type": "range", "id": "title_font_size", "label": "Product Title Font Size", "min": 4, "max": 48, "step": 1, "default": 18, "unit": "px" },
+    { "type": "color", "id": "price_color", "label": "Price Color", "default": "#000000" },
+    { "type": "range", "id": "price_font_size", "label": "Price Font Size", "min": 4, "max": 48, "step": 1, "default": 16, "unit": "px" },
+    { "type": "color", "id": "button_bg_color", "label": "Button Background Color", "default": "#000" },
+    { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#ffffff" },
+    { "type": "range", "id": "button_font_size", "label": "Button Font Size", "min": 4, "max": 48, "step": 1, "default": 16, "unit": "px" },
+    { "type": "range", "id": "card_border_radius", "label": "Card Border Radius", "min": 0, "max": 24, "step": 1, "default": 8, "unit": "px" }
+  ]
+}
+{% endschema %}
+
+<style>
+.cart-recommendation-header {
+  color: {{ block.settings.text_heading_color }};
+  font-size: {{ block.settings.text_heading_font_size }}px;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+.cart-recommendation-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  width: 100%;
+  justify-content: flex-start;
+}
+.cart-recommendation-card {
+  background: #fff;
+  border-radius: {{ block.settings.card_border_radius }}px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  min-width: 200px;
+  max-width: 250px;
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border 0.2s;
+  border: 1px solid #e5e7eb;
+}
+.cart-recommendation-card:hover {
+  border: 2px solid #292d69;
+  box-shadow: 0 4px 16px rgba(41,45,105,0.12);
+}
+.cart-recommendation-img-container {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  background: #f3f3f3;
+  overflow: hidden;
+  cursor: pointer;
+}
+.cart-recommendation-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: {{ block.settings.card_border_radius }}px {{ block.settings.card_border_radius }}px 0 0;
+}
+.cart-recommendation-title {
+  color: {{ block.settings.title_color }};
+  font-size: {{ block.settings.title_font_size }}px;
+  font-weight: 500;
+  margin: 12px 0 6px 0;
+  text-align: left;
+  min-height: 2.8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.cart-recommendation-title:hover {
+  text-decoration: underline;
+}
+.cart-recommendation-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.cart-recommendation-price {
+  color: {{ block.settings.price_color }};
+  font-size: {{ block.settings.price_font_size }}px;
+  font-weight: 600;
+}
+.cart-recommendation-strike {
+  text-decoration: line-through;
+  color: #888;
+  font-size: 13px;
+}
+.cart-recommendation-btn {
+  background: {{ block.settings.button_bg_color }};
+  color: {{ block.settings.button_text_color }};
+  font-size: {{ block.settings.button_font_size }}px;
+  border: none;
+  border-radius: {{ block.settings.card_border_radius }}px;
+  padding: 10px 0;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 0;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.cart-recommendation-btn:disabled {
+  background: #e5e7eb;
+  color: #aaa;
+  cursor: not-allowed;
+}
+.cart-recommendation-variant-select {
+  margin: 10px 0 0 0;
+  width: 100%;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+@media (max-width: 1200px) {
+  .cart-recommendation-card { max-width: 33%; min-width: 180px; }
+}
+@media (max-width: 900px) {
+  .cart-recommendation-card { max-width: 48%; min-width: 140px; }
+}
+@media (max-width: 600px) {
+  .cart-recommendation-products {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+  }
+  .cart-recommendation-card {
+    min-width: 180px;
+    max-width: 70vw;
+    flex: 0 0 70vw;
+    margin: 0;
+  }
+  .cart-recommendation-img-container {
+    padding-top: 70%;
+  }
+}
+</style>
+
+<div id="cart-recommendation-block" style="display:none;">
+  <div class="cart-recommendation-header">{{ block.settings.header_text }}</div>
+  <div class="cart-recommendation-products" id="cart-recommendation-products"></div>
+</div>
+
+<script>
+(function() {
+  // Use global config if available, otherwise fall back to block settings
+  const DEFAULT_ENDPOINT = "https://api.magicsell.ai"
+  const shop = window.MagicShiftConfig?.shop || '{{ shop.permanent_domain }}';
+
+  function fetchCartAndGetVariantIds(callback) {
+    fetch('/cart.js')
+      .then(function(response) { return response.json(); })
+      .then(function(cart) {
+        if (cart.items && cart.items.length > 0) {
+          var variantIds = cart.items.map(function(item) { return item.variant_id; });
+          callback(variantIds, cart);
+        } else {
+          callback([], null);
+        }
+      })
+      .catch(function() {
+        callback([], null);
+      });
+  }
+
+  function fetchRecommendedProducts(variantIds) {
+    return fetch(`${DEFAULT_ENDPOINT}/api/v2/recommendation/cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shop: shop,
+        type: 'cart-cross-sell',
+        layout: 'default',
+        products: variantIds
+      })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+      if (data.success && data.data && data.data.products && data.data.products.length > 0) {
+        return data.data.products;
+      }
+      return [];
+    })
+    .catch(function() { return []; });
+  }
+
+  function formatPrice(price) {
+    return '₹' + parseFloat(price).toFixed(2);
+  }
+
+  function renderRecommendations(products) {
+    var block = document.getElementById('cart-recommendation-block');
+    var list = document.getElementById('cart-recommendation-products');
+    if (!products || products.length === 0) {
+      block.style.display = 'none';
+      return;
+    }
+    block.style.display = '';
+    list.innerHTML = '';
+    products.forEach(function(product) {
+      var card = document.createElement('div');
+      card.className = 'cart-recommendation-card';
+
+      var selectedVariant = product.variants && product.variants[0] ? product.variants[0] : null;
+      var selectedVariantId = selectedVariant ? selectedVariant.id : null;
+      var selectedVariantPrice = selectedVariant ? (selectedVariant.discountedPrice || selectedVariant.price) : (product.discountedPrice || product.price);
+
+      function getProductUrl() {
+        if (product.variants && product.variants.length > 1 && selectedVariantId) {
+          return '/products/' + product.handle + '?variant=' + selectedVariantId;
+        }
+        return '/products/' + product.handle;
+      }
+
+      // Image
+      var imgContainer = document.createElement('div');
+      imgContainer.className = 'cart-recommendation-img-container';
+      imgContainer.onclick = function() { window.location.href = getProductUrl(); };
+
+      var img = document.createElement('img');
+      img.className = 'cart-recommendation-img';
+      img.src = selectedVariant && selectedVariant.image ? selectedVariant.image : (product.image || (product.images && product.images[0]));
+      img.alt = product.title;
+      imgContainer.appendChild(img);
+      card.appendChild(imgContainer);
+
+      // Title
+      var title = document.createElement('div');
+      title.className = 'cart-recommendation-title';
+      title.innerText = product.title;
+      title.onclick = function() { window.location.href = getProductUrl(); };
+      card.appendChild(title);
+
+      // Variant select
+      if (product.variants && product.variants.length > 1) {
+        var variantSelect = document.createElement('select');
+        variantSelect.className = 'cart-recommendation-variant-select';
+        product.variants.forEach(function(variant) {
+          var option = document.createElement('option');
+          option.value = variant.id;
+          option.setAttribute('data-price', variant.discountedPrice || variant.price);
+          option.setAttribute('data-image', variant.image || '');
+          option.innerText = variant.title;
+          variantSelect.appendChild(option);
+        });
+        variantSelect.onchange = function(e) {
+          var variantId = e.target.value;
+          var selectedOption = e.target.selectedOptions[0];
+          selectedVariantId = variantId;
+          selectedVariantPrice = selectedOption.getAttribute('data-price');
+          img.src = selectedOption.getAttribute('data-image') || product.image || (product.images && product.images[0]);
+          priceRow.querySelector('.cart-recommendation-price').innerText = formatPrice(selectedVariantPrice);
+        };
+        card.appendChild(variantSelect);
+      }
+
+      // Price row
+      var priceRow = document.createElement('div');
+      priceRow.className = 'cart-recommendation-price-row';
+      var price = document.createElement('span');
+      price.className = 'cart-recommendation-price';
+      price.innerText = formatPrice(selectedVariantPrice);
+      priceRow.appendChild(price);
+
+      // Strikethrough if discounted
+      if (
+        selectedVariant &&
+        selectedVariant.discountedPrice &&
+        selectedVariant.discountedPrice !== selectedVariant.price
+      ) {
+        var strike = document.createElement('span');
+        strike.className = 'cart-recommendation-strike';
+        strike.innerText = formatPrice(selectedVariant.price);
+        priceRow.appendChild(strike);
+      }
+      card.appendChild(priceRow);
+
+      // Add to Cart button
+      var btn = document.createElement('button');
+      btn.className = 'cart-recommendation-btn';
+      btn.innerText = 'Add to Cart';
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        var variantIdToAdd = selectedVariantId;
+        if (!variantIdToAdd) {
+          alert('No variant found for this product.');
+          return;
+        }
+        btn.disabled = true;
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: [{ id: variantIdToAdd, quantity: 1, properties: { __recommended_drawer: true } }] })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function() { window.location.reload(); })
+        .catch(function() { alert('Error adding to cart.'); btn.disabled = false; });
+      };
+      card.appendChild(btn);
+
+      list.appendChild(card);
+    });
+  }
+
+  fetchCartAndGetVariantIds(function(variantIds, cart) {
+    if (variantIds.length > 0) {
+      fetchRecommendedProducts(variantIds).then(function(products) {
+        renderRecommendations(products);
+      });
+    } else {
+      renderRecommendations([]);
+    }
+  });
+})();
+</script> 
