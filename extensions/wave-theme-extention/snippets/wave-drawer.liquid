@@ -277,6 +277,11 @@ body.overflow-hidden {
 #wave-drawer-title{
   margin:0;
 }
+
+@keyframes wave-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 </style>
 
 <div id="wave-drawer-overlay"></div>
@@ -601,13 +606,24 @@ body.overflow-hidden {
         const itemPrice = (item.final_price / 100).toFixed(2);
 
         html += `
-          <div style="display: flex; gap: 15px; padding: 15px 0; border-top: 1px solid #f3f4f6;">
+          <div style="display: flex; gap: 15px; padding: 15px 0; border-top: 1px solid #f3f4f6;" data-item-key="${item.key}">
             <img src="${item.image}" alt="${item.title}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
             <div style="flex: 1;">
               <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 500;">${item.title}</h4>
               ${item.variant_title ? `<p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">${item.variant_title}</p>` : ''}
-              <p style="margin: 0; font-size: 14px; font-weight: 600;">Rs. ${price}</p>
-              <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Qty: ${item.quantity} × Rs. ${itemPrice}</p>
+              <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600;">Rs. ${price}</p>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #e5e7eb; border-radius: 4px; padding: 2px; position: relative; min-width: 100px;">
+                  <button onclick="updateCartQuantity('${item.key}', ${item.quantity - 1})" style="background: none; border: none; cursor: pointer; padding: 5px 10px; font-size: 16px; color: #666; position: relative; z-index: 1;" data-qty-btn>−</button>
+                  <span style="padding: 0 10px; font-size: 14px; font-weight: 500; min-width: 20px; text-align: center;" data-quantity-display="${item.key}">${item.quantity}</span>
+                  <div class="qty-spinner" id="qty-spinner-${item.key}" style="display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top: 2px solid #333; border-radius: 50%; animation: wave-spin 0.8s linear infinite; background: white; z-index: 2;"></div>
+                  <button onclick="updateCartQuantity('${item.key}', ${item.quantity + 1})" style="background: none; border: none; cursor: pointer; padding: 5px 10px; font-size: 16px; color: #666; position: relative; z-index: 1;" data-qty-btn>+</button>
+                </div>
+                <div style="position: relative;">
+                  <button onclick="removeFromCart('${item.key}')" style="background: #fee; color: #c00; border: 1px solid #fcc; border-radius: 4px; padding: 5px 10px; font-size: 12px; cursor: pointer; font-weight: 500; position: relative;" data-remove-btn="${item.key}">Remove</button>
+                  <div class="remove-spinner" id="remove-spinner-${item.key}" style="display: none; position: absolute; left: 50%; top: -30px; transform: translateX(-50%); width: 18px; height: 18px; border: 2px solid #fcc; border-top: 2px solid #c00; border-radius: 50%; animation: wave-spin 0.8s linear infinite; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -702,6 +718,104 @@ body.overflow-hidden {
         drawer.style.display = 'none';
       });
     }
+
+    // Intercept "Add to Cart" form submissions on product pages
+    interceptAddToCartForms();
+  }
+
+  function interceptAddToCartForms() {
+    // Find all add to cart forms
+    const addToCartForms = document.querySelectorAll('form[action="/cart/add"], form[action*="/cart/add"]');
+
+    addToCartForms.forEach(form => {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+          const formData = new FormData(form);
+          const variantId = formData.get('id');
+          const quantity = formData.get('quantity') || 1;
+
+          const response = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: variantId,
+              quantity: parseInt(quantity),
+            }),
+          });
+
+          if (response.ok) {
+            await updateCartTotal();
+            openWaveDrawer();
+          } else {
+            alert('Failed to add product to cart');
+          }
+        } catch (error) {
+          console.error('Failed to add to cart:', error);
+          alert('Failed to add product to cart');
+        }
+
+        return false;
+      }, true);
+    });
+
+    // Also intercept add to cart buttons
+    const addToCartButtons = document.querySelectorAll(
+      'button[name="add"], ' +
+      'button[type="submit"][form*="product"], ' +
+      '.product-form__submit, ' +
+      '[name="add"][type="submit"]'
+    );
+
+    addToCartButtons.forEach(button => {
+      if (button.closest('form[action*="/cart/add"]')) {
+        // Already handled by form submit
+        return;
+      }
+
+      button.addEventListener('click', async function(e) {
+        const form = button.closest('form');
+        if (form && form.action.includes('/cart/add')) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          try {
+            const formData = new FormData(form);
+            const variantId = formData.get('id');
+            const quantity = formData.get('quantity') || 1;
+
+            const response = await fetch('/cart/add.js', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                id: variantId,
+                quantity: parseInt(quantity),
+              }),
+            });
+
+            if (response.ok) {
+              await updateCartTotal();
+              openWaveDrawer();
+            } else {
+              alert('Failed to add product to cart');
+            }
+          } catch (error) {
+            console.error('Failed to add to cart:', error);
+            alert('Failed to add product to cart');
+          }
+
+          return false;
+        }
+      }, true);
+    });
+
+    console.log('Wave Drawer: Intercepted', addToCartForms.length, 'add to cart forms');
   }
 
   // Expose openDrawer function globally so it can be called from anywhere
@@ -737,10 +851,102 @@ body.overflow-hidden {
 
       if (response.ok) {
         await updateCartTotal();
-        alert('Product added to cart!');
+        // Open the drawer instead of showing alert
+        openWaveDrawer();
       }
     } catch (error) {
       console.error('Failed to add to cart:', error);
+    }
+  };
+
+  window.updateCartQuantity = async function(lineItemKey, newQuantity) {
+    try {
+      // Show quantity spinner
+      const qtySpinner = document.getElementById(`qty-spinner-${lineItemKey}`);
+      const qtyDisplay = document.querySelector(`[data-quantity-display="${lineItemKey}"]`);
+      const itemRow = document.querySelector(`[data-item-key="${lineItemKey}"]`);
+      const qtyButtons = itemRow ? itemRow.querySelectorAll('[data-qty-btn]') : [];
+
+      if (qtySpinner && qtyDisplay) {
+        qtyDisplay.style.opacity = '0';
+        qtySpinner.style.display = 'block';
+        qtyButtons.forEach(btn => btn.disabled = true);
+      }
+
+      // If quantity is 0, remove the item
+      if (newQuantity <= 0) {
+        // Hide spinner before removing
+        if (qtySpinner) qtySpinner.style.display = 'none';
+        if (qtyDisplay) qtyDisplay.style.opacity = '1';
+        qtyButtons.forEach(btn => btn.disabled = false);
+        await removeFromCart(lineItemKey);
+        return;
+      }
+
+      const response = await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: lineItemKey,
+          quantity: newQuantity,
+        }),
+      });
+
+      if (response.ok) {
+        await updateCartTotal();
+      }
+    } catch (error) {
+      console.error('Failed to update cart quantity:', error);
+    } finally {
+      // Hide quantity spinner
+      const qtySpinner = document.getElementById(`qty-spinner-${lineItemKey}`);
+      const qtyDisplay = document.querySelector(`[data-quantity-display="${lineItemKey}"]`);
+      const itemRow = document.querySelector(`[data-item-key="${lineItemKey}"]`);
+      const qtyButtons = itemRow ? itemRow.querySelectorAll('[data-qty-btn]') : [];
+
+      if (qtySpinner) qtySpinner.style.display = 'none';
+      if (qtyDisplay) qtyDisplay.style.opacity = '1';
+      qtyButtons.forEach(btn => btn.disabled = false);
+    }
+  };
+
+  window.removeFromCart = async function(lineItemKey) {
+    try {
+      // Show remove spinner
+      const removeSpinner = document.getElementById(`remove-spinner-${lineItemKey}`);
+      const removeBtn = document.querySelector(`[data-remove-btn="${lineItemKey}"]`);
+      const itemRow = document.querySelector(`[data-item-key="${lineItemKey}"]`);
+
+      if (removeSpinner) removeSpinner.style.display = 'block';
+      if (removeBtn) removeBtn.disabled = true;
+      if (itemRow) itemRow.style.opacity = '0.5';
+
+      const response = await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: lineItemKey,
+          quantity: 0,
+        }),
+      });
+
+      if (response.ok) {
+        await updateCartTotal();
+      }
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+      // Re-enable button on error
+      const removeSpinner = document.getElementById(`remove-spinner-${lineItemKey}`);
+      const removeBtn = document.querySelector(`[data-remove-btn="${lineItemKey}"]`);
+      const itemRow = document.querySelector(`[data-item-key="${lineItemKey}"]`);
+
+      if (removeSpinner) removeSpinner.style.display = 'none';
+      if (removeBtn) removeBtn.disabled = false;
+      if (itemRow) itemRow.style.opacity = '1';
     }
   };
 
