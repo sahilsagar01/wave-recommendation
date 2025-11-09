@@ -1,0 +1,17 @@
+query RunInput {
+  cart {
+    cost {
+      subtotalAmount {
+        amount
+      }
+    }
+    deliveryGroups {
+      id
+    }
+  }
+  discountNode {
+    metafield(namespace: "$app:shipping-discount", key: "function-configuration") {
+      value
+    }
+  }
+}

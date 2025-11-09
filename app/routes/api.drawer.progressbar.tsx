@@ -4,6 +4,90 @@ import { authenticate } from "../shopify.server";
 import { getProgressBarCollection } from "../mongodb.server";
 import type { ProgressBar } from "../types/drawer.types";
 
+async function createShippingDiscount(admin: any, goalAmount: number, goalText: string) {
+  try {
+    // First, get the function ID
+    const queryFunctions = `
+      query {
+        shopifyFunctions(first: 25) {
+          nodes {
+            id
+            apiType
+            title
+          }
+        }
+      }
+    `;
+
+    const functionsResponse = await admin.graphql(queryFunctions);
+    const functionsResult = await functionsResponse.json();
+
+    // Find the shipping discount function
+    const shippingFunction = functionsResult.data?.shopifyFunctions?.nodes?.find(
+      (func: any) => func.apiType === "shipping_discounts"
+    );
+
+    if (!shippingFunction) {
+      console.error("Shipping discount function not found. Available functions:", functionsResult.data?.shopifyFunctions?.nodes);
+      return {
+        success: false,
+        error: "Shipping discount function not deployed. Please run 'npm run deploy' first."
+      };
+    }
+
+    console.log("Found shipping function:", shippingFunction);
+
+    // Create an automatic discount using the Shopify Function
+    const mutation = `
+      mutation CreateAutomaticDiscount($discount: DiscountAutomaticAppInput!) {
+        discountAutomaticAppCreate(automaticAppDiscount: $discount) {
+          automaticAppDiscount {
+            discountId
+            title
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    const variables = {
+      discount: {
+        title: `Wave Free Shipping - ${goalText}`,
+        functionId: shippingFunction.id,
+        startsAt: new Date().toISOString(),
+        metafields: [
+          {
+            namespace: "$app:shipping-discount",
+            key: "function-configuration",
+            type: "json",
+            value: JSON.stringify({
+              goalAmount: goalAmount,
+              goalText: goalText
+            })
+          }
+        ]
+      }
+    };
+
+    const response = await admin.graphql(mutation, { variables });
+    const result = await response.json();
+
+    if (result.data?.discountAutomaticAppCreate?.userErrors?.length > 0) {
+      console.error("Error creating discount:", result.data.discountAutomaticAppCreate.userErrors);
+      return { success: false, errors: result.data.discountAutomaticAppCreate.userErrors };
+    }
+
+    console.log("Created automatic shipping discount:", result.data?.discountAutomaticAppCreate?.automaticAppDiscount);
+    return { success: true, discount: result.data?.discountAutomaticAppCreate?.automaticAppDiscount };
+  } catch (error) {
+    console.error("Failed to create shipping discount:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
@@ -15,7 +99,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
+  const { session, admin } = await authenticate.admin(request);
   const shop = session.shop;
 
   const formData = await request.formData();
@@ -41,9 +125,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       updatedAt: new Date(),
     };
 
+    // Create automatic shipping discount when enabled
+    if (progressBar.isEnabled && progressBar.goalAmount && progressBar.goalText) {
+      const discountResult = await createShippingDiscount(admin, progressBar.goalAmount, progressBar.goalText);
+      console.log("Discount creation result:", discountResult);
+    }
+
     if (action === "create") {
       progressBar.createdAt = new Date();
-      const result = await collection.insertOne(progressBar as ProgressBar);
+      const result = await collection.insertOne(progressBar as any);
       return json({ success: true, id: result.insertedId });
     } else {
       const id = formData.get("id")?.toString();
